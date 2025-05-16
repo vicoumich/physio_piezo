@@ -36,7 +36,8 @@ def read_one_channel(filename, format, channel_name, scaled=True):
 
     if format not in supported_format.keys():
         if format == 'biosemi':
-            return read_bdf(file_name=filename, channels=channel_name)
+            channels = channel_name if isinstance(channel_name, list) else list(channel_name)
+            return read_bdf(file_name=filename, channels=channels)
         raise ValueError(f'{format} is not a supported format ({list(supported_format.keys())})')
 
     neo_class = supported_format[format]
