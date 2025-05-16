@@ -14,8 +14,8 @@ def read_one_channel(filename, format, channel_name, scaled=True):
     filename: str or Path
         The file
     format: str
-        The foormat of the file 'micromed' or 'brainvision'
-    channel_name: str
+        The foormat of the file 'micromed', 'brainvision' or 'biosemi' 
+    channel_name: str | list[str]
         The channel names.
     scaled: bool (default True)
         Return traces scaled to unit or unscaled (int16)
@@ -35,6 +35,8 @@ def read_one_channel(filename, format, channel_name, scaled=True):
     }    
 
     if format not in supported_format.keys():
+        if format == 'biosemi':
+            return read_bdf(file_name=filename, channels=channel_name)
         raise ValueError(f'{format} is not a supported format ({list(supported_format.keys())})')
 
     neo_class = supported_format[format]
@@ -72,3 +74,40 @@ def read_one_channel(filename, format, channel_name, scaled=True):
     srate = reader.header['signal_channels']['sampling_rate'][0]
 
     return trace, srate
+
+
+def read_bdf(file_name, channels: list[str]):
+    """
+    Simple function on top of mne that read a bdf file from biosemi environment.
+    The function returns the channels in parameter.
+
+    Parameters
+    ----------
+    file_name: str
+        The file name
+    channels: list[str]
+        The list of channels to extract.
+
+    Returns
+    -------
+    data: pd.DataFrame
+       DataFrame with the signals
+    srate: float
+        Sampling rate.
+    """
+    import mne
+    from pandas import DataFrame
+    content_bdf  = mne.io.read_raw_bdf(file_name, preload=True)
+    channels_bdf = content_bdf.ch_names
+    data = {}
+    srate = channels_bdf.info["sfreq"]
+    
+    for ch in channels:
+        if ch in channels_bdf:
+            data[ch] = content_bdf.get_data(picks=ch).flatten()
+        else:
+            raise ValueError(f"{ch} does not exist in the file. \nPossible channel{list(channels_bdf)}")
+    
+    return DataFrame(data=data), srate
+
+    
