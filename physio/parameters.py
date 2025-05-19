@@ -67,6 +67,16 @@ _resp_parameters['rat_plethysmo'] = dict(
     cycle_clean=dict(low_limit_log_ratio=5.),
 )
 
+# Human respiration with piezo sensor 
+_resp_parameters['human_piezo'] = dict(
+    preprocess=dict(band=[0.05, 1.0], btype='bandpass', ftype='bessel', order=4, normalize=True),
+    smooth=dict(win_shape='gaussian', sigma_ms=60.0),
+    cycle_detection=dict(method="extrema", min_cycle_duration=2.0),
+    baseline=dict(baseline_mode='zero'),
+    features=dict(compute_volume=True, compute_amplitude=True),
+    cycle_clean=dict(low_limit_log_ratio=4.0),
+)
+
 # belt form etisens https://etisense.com/
 _resp_parameters['rat_etisens_belt'] = dict(
     preprocess=dict(band=30., btype='lowpass', ftype='bessel', order=5, normalize=False),

@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from scipy.signal import find_peaks
 
 from .tools import get_empirical_mode, compute_median_mad
 from .preprocess import preprocess, smooth_signal
@@ -145,6 +146,8 @@ def detect_respiration_cycles(resp, srate, method="crossing_baseline", **method_
         cycles = detect_respiration_cycles_crossing_baseline(resp, srate, **method_kwargs)
     elif method == "co2":
         cycles = detect_respiration_cycles_co2(resp, srate, **method_kwargs)
+    elif method == "extrema":
+        cycles = detect_cycles_by_extrema(resp, srate, **method_kwargs)
     else:
         raise ValueError(f"detect_respiration_cycles(): {method} do not exists")
     
@@ -316,6 +319,54 @@ def detect_respiration_cycles_co2(co2_raw, srate, thresh_inspi_factor=0.08, thre
     cycles[:, 1] = ind_exp
     cycles[:, 2] = ind_insp[1:]
     
+    return cycles
+
+
+def detect_cycles_by_extrema(resp, srate, min_cycle_duration=2.0):
+    """
+    Detect respiration cycles based on signal extrema (usefull for piezo sensor)
+    
+    Parameters
+    ----------
+    resp : np.array
+        Respiration signal
+    srate : float
+        Sampling rate (Hz)
+    min_cycle_duration : float
+        Minimum time between 2 inhalations
+    
+    Returns
+    --------
+    cycles : np.array de shape (n, 3)
+        columns = [index_inspi, index_expi, next_index_inspi]
+    """
+    # Durée minimale entre deux inspi (en frames)
+    min_dist_samples = int(min_cycle_duration * srate)
+
+    # Trouver les pics (maxima) = fins inspiration
+    peaks, _ = find_peaks(resp, distance=min_dist_samples)
+
+    # Trouver les creux (minima) = fins expiration → on inverse le signal
+    troughs, _ = find_peaks(-resp, distance=min_dist_samples)
+
+    # On garde uniquement les extrema dans l'ordre alterné [trough, peak, trough]
+    # [inspi, expi, next_inspi]
+    cycles = []
+    for i in range(len(troughs) - 1):
+        t1 = troughs[i]
+        t2 = peaks[(peaks > t1) & (peaks < troughs[i + 1])]
+        if len(t2) == 0:
+            continue
+        t2 = t2[0]  # on prend le premier pic entre les deux creux
+        t3 = troughs[i + 1]
+        cycles.append([t1, t2, t3])
+
+    # Forcing de la continuité des valeurs next_inspi de i et inspi de i+1 dû à un bug 
+    cycles = np.array(cycles, dtype=int)
+    # pour chaque cycle sauf le dernier,
+    # on réécrit next_inspi à partir de l'inspi du cycle suivant
+    for i in range(len(cycles)-1):
+        cycles[i, 2] = cycles[i+1, 0]
     return cycles
 
 
