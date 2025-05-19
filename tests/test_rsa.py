@@ -1,7 +1,7 @@
 import numpy as np
 from pathlib import Path
 
-from physio import compute_respiration, compute_ecg, compute_rsa
+from physio_piezo import compute_respiration, compute_ecg, compute_rsa
 
 # read signals
 example_folder = Path(__file__).parents[1] / 'examples'

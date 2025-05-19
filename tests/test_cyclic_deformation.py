@@ -1,7 +1,7 @@
 import numpy as np
 from pathlib import Path
 
-from physio import compute_respiration, deform_traces_to_cycle_template
+from physio_piezo import compute_respiration, deform_traces_to_cycle_template
 
 
 # read signals

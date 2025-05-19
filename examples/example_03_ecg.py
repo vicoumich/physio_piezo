@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 from pprint import pprint
 
-import physio
+import physio_piezo
 
 
 ##############################################################################
@@ -25,7 +25,7 @@ raw_ecg = np.load('ecg1.npy')
 srate = 1000.
 times = np.arange(raw_ecg.size) / srate
 
-ecg, ecg_peaks = physio.compute_ecg(raw_ecg, srate, parameter_preset='human_ecg')
+ecg, ecg_peaks = physio_piezo.compute_ecg(raw_ecg, srate, parameter_preset='human_ecg')
 
 r_peak_ind = ecg_peaks['peak_index'].values
 
@@ -52,7 +52,7 @@ ax.set_xlim(95, 125)
 
 # get paramseters predefined set for 'human_ecg'
 # this is a nested dict of parameter of every step
-parameters = physio.get_ecg_parameters('human_ecg')
+parameters = physio_piezo.get_ecg_parameters('human_ecg')
 pprint(parameters)
 # lets change on parameter in the structure
 parameters['preprocess']['band'] = [2., 40.]
@@ -60,7 +60,7 @@ parameters['preprocess']['ftype'] = 'bessel'
 parameters['preprocess']['order'] = 4
 pprint(parameters)
 
-ecg, ecg_peaks = physio.compute_ecg(raw_ecg, srate, parameters=parameters)
+ecg, ecg_peaks = physio_piezo.compute_ecg(raw_ecg, srate, parameters=parameters)
 
 r_peak_ind = ecg_peaks['peak_index'].values
 
@@ -79,7 +79,7 @@ ax.set_xlim(95, 125)
 #
 
 
-metrics = physio.compute_ecg_metrics(ecg_peaks, min_interval_ms=500., max_interval_ms=2000.)
+metrics = physio_piezo.compute_ecg_metrics(ecg_peaks, min_interval_ms=500., max_interval_ms=2000.)
 print(metrics)
 
 ##############################################################################
@@ -98,14 +98,14 @@ print(metrics)
 # Feel free to use the units you prefer (bpm or ms)
 
 new_times = times[::10]
-instantaneous_rate = physio.compute_instantaneous_rate(
+instantaneous_rate = physio_piezo.compute_instantaneous_rate(
     ecg_peaks,
     new_times,
     limits=None,
     units='bpm',
     interpolation_kind='linear',
 )
-rri = physio.compute_instantaneous_rate(
+rri = physio_piezo.compute_instantaneous_rate(
     ecg_peaks,
     new_times,
     limits=None,
@@ -131,7 +131,7 @@ ax.set_xlim(100, 150)
 # 
 
 freqency_bands = {'lf': (0.04, .15), 'hf' : (0.15, .4)}
-psd_freqs, psd, psd_metrics = physio.compute_hrv_psd(
+psd_freqs, psd, psd_metrics = physio_piezo.compute_hrv_psd(
     ecg_peaks,
     sample_rate=100.,
     limits=None,

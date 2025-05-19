@@ -25,7 +25,7 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 from pprint import pprint
 
-import physio
+import physio_piezo
 
 
 
@@ -49,8 +49,8 @@ times = np.arange(raw_resp.size) / srate
 #  
 #
 
-resp, resp_cycles = physio.compute_respiration(raw_resp, srate, parameter_preset='human_airflow')
-ecg, ecg_peaks = physio.compute_ecg(raw_ecg, srate, parameter_preset='human_ecg')
+resp, resp_cycles = physio_piezo.compute_respiration(raw_resp, srate, parameter_preset='human_airflow')
+ecg, ecg_peaks = physio_piezo.compute_ecg(raw_ecg, srate, parameter_preset='human_ecg')
 
 
 ##############################################################################
@@ -65,7 +65,7 @@ ecg, ecg_peaks = physio.compute_ecg(raw_ecg, srate, parameter_preset='human_ecg'
 
 points_per_cycle = 50
 
-rsa_cycles, cyclic_cardiac_rate = physio.compute_rsa(
+rsa_cycles, cyclic_cardiac_rate = physio_piezo.compute_rsa(
     resp_cycles,
      ecg_peaks,
      srate=10.,

@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 from pprint import pprint
 
-import physio
+import physio_piezo
 
 
 
@@ -40,8 +40,8 @@ times = np.arange(raw_resp.size) / srate
 # 
 
 
-ecg, ecg_peaks = physio.compute_ecg(raw_ecg, srate)
-resp, resp_cycles = physio.compute_respiration(raw_resp, srate)
+ecg, ecg_peaks = physio_piezo.compute_ecg(raw_ecg, srate)
+resp, resp_cycles = physio_piezo.compute_respiration(raw_resp, srate)
 
 
 ##############################################################################
@@ -91,7 +91,7 @@ inspi_ratio = resp_cycles['cycle_ratio'].median()
 
 cycle_times = resp_cycles[['inspi_time', 'expi_time', 'next_inspi_time']].values
 
-rpeak_phase = physio.time_to_cycle(ecg_peaks['peak_time'].values, cycle_times, segment_ratios=[inspi_ratio])
+rpeak_phase = physio_piezo.time_to_cycle(ecg_peaks['peak_time'].values, cycle_times, segment_ratios=[inspi_ratio])
 
 
 count, bins = np.histogram(rpeak_phase % 1, bins=np.linspace(0, 1, 101))
@@ -131,7 +131,7 @@ ax.set_xlim(-0.01, 1.01)
 bins = np.linspace(-3, 3, 100)
 
 
-count, bins = physio.crosscorrelogram(ecg_peaks['peak_time'].values, 
+count, bins = physio_piezo.crosscorrelogram(ecg_peaks['peak_time'].values, 
                                resp_cycles['expi_time'].values,
                                bins=bins)
 
@@ -145,7 +145,7 @@ ax.legend()
 
 
 ax = axs[1]
-count, bins = physio.crosscorrelogram(ecg_peaks['peak_time'].values, 
+count, bins = physio_piezo.crosscorrelogram(ecg_peaks['peak_time'].values, 
                                resp_cycles['inspi_time'].values,
                                bins=bins)
 ax.bar(bins[:-1], count, align='edge', width=bins[1] - bins[0])

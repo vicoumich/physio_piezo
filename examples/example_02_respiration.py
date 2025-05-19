@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 from pprint import pprint
 
-import physio
+import physio_piezo
 
 
 
@@ -29,7 +29,7 @@ srate = 1000.
 times = np.arange(raw_resp.size) / srate
 
 # the easiest way is to use predefined parameters
-resp, resp_cycles = physio.compute_respiration(raw_resp, srate, parameter_preset='human_airflow')
+resp, resp_cycles = physio_piezo.compute_respiration(raw_resp, srate, parameter_preset='human_airflow')
 
 # resp_cycles is a dataframe containing all cycles and related fetaures (duration, amplitude, volume, timing)
 print(resp_cycles)
@@ -55,7 +55,7 @@ ax.set_xlim(110, 170)
 # It is possible to get default parameters dictionnary by calling it with the :py:func:`~physio.get_respiration_parameters` function.
 
 # this is a nested dict of parameters of every processing step
-parameters = physio.get_respiration_parameters('human_airflow')
+parameters = physio_piezo.get_respiration_parameters('human_airflow')
 pprint(parameters)
 
 ##############################################################################
@@ -71,7 +71,7 @@ parameters['smooth']['sigma_ms'] = 100.
 pprint(parameters)
 
 # ... and use them by providing it to "parameters"
-resp, resp_cycles = physio.compute_respiration(raw_resp, srate, parameters=parameters)
+resp, resp_cycles = physio_piezo.compute_respiration(raw_resp, srate, parameters=parameters)
 
 
 
@@ -83,21 +83,21 @@ resp, resp_cycles = physio.compute_respiration(raw_resp, srate, parameters=param
 # Here are details of all low-level functions used internally in the compute_respiration()
 
 
-resp = physio.preprocess(resp, srate, band=25., btype='lowpass', ftype='bessel', order=5, normalize=False)
-resp = physio.smooth_signal(resp, srate, win_shape='gaussian', sigma_ms=90.0)
+resp = physio_piezo.preprocess(resp, srate, band=25., btype='lowpass', ftype='bessel', order=5, normalize=False)
+resp = physio_piezo.smooth_signal(resp, srate, win_shape='gaussian', sigma_ms=90.0)
 
-baseline = physio.get_respiration_baseline(resp, srate, baseline_mode='median')
+baseline = physio_piezo.get_respiration_baseline(resp, srate, baseline_mode='median')
 print('baseline', baseline)
 
 # this will give a numpy.array with shape (num_cycle, 3)
-cycles = physio.detect_respiration_cycles(resp, srate, baseline_mode='manual', baseline=baseline)
+cycles = physio_piezo.detect_respiration_cycles(resp, srate, baseline_mode='manual', baseline=baseline)
 print(cycles[:10])
 
 # this will return a dataframe with all cycles and fetaure before cleaning
-resp_cycles = physio.compute_respiration_cycle_features(resp, srate, cycles, baseline=baseline)
+resp_cycles = physio_piezo.compute_respiration_cycle_features(resp, srate, cycles, baseline=baseline)
 
 # this will remove outliers cycles based on log ratio distribution
-resp_cycles = physio.clean_respiration_cycles(resp, srate, resp_cycles, baseline, low_limit_log_ratio=3)
+resp_cycles = physio_piezo.clean_respiration_cycles(resp, srate, resp_cycles, baseline, low_limit_log_ratio=3)
 print(resp_cycles.head(10))
 
 

@@ -9,7 +9,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
 
-import physio
+import physio_piezo
 
 ##############################################################################
 # 
@@ -51,7 +51,7 @@ ax.set_xlim(185, 225)
 #    * compute cycle features (resp_cycles)
 
 
-resp, resp_cycles = physio.compute_respiration(raw_resp, srate)
+resp, resp_cycles = physio_piezo.compute_respiration(raw_resp, srate)
 
 fig, ax = plt.subplots()
 ax.plot(times, raw_resp)
@@ -101,7 +101,7 @@ ax.set_xlim(185, 225)
 #     * Detect R peaks (ecg_peaks)
 
 
-ecg, ecg_peaks = physio.compute_ecg(raw_ecg, srate)
+ecg, ecg_peaks = physio_piezo.compute_ecg(raw_ecg, srate)
 
 r_peak_ind = ecg_peaks['peak_index'].values
 
@@ -127,7 +127,7 @@ ax.set_xlim(185, 225)
 # We can visualize these metrics and the RR interval distribution.
 
 
-ecg_metrics = physio.compute_ecg_metrics(ecg_peaks)
+ecg_metrics = physio_piezo.compute_ecg_metrics(ecg_peaks)
 
 fig, ax = plt.subplots()
 ax.hist(np.diff(ecg_peaks['peak_time']) * 1000., bins=np.arange(0, 1400, 10), alpha=0.5)
@@ -158,22 +158,22 @@ print(ecg_metrics)
 
 # here we have 3 times per cycle so 2 segments
 cycle_times = resp_cycles[['inspi_time', 'expi_time', 'next_inspi_time']].values
-deformed_resp_1seg = physio.deform_traces_to_cycle_template(resp, times, cycle_times,
+deformed_resp_1seg = physio_piezo.deform_traces_to_cycle_template(resp, times, cycle_times,
                                                 points_per_cycle=40, segment_ratios=0.4,
                                                 output_mode='stacked')
 print(deformed_resp_1seg.shape, cycle_times.shape)
 
 # here we have 2 times per cycle so 1 segment
 cycle_times = resp_cycles[['inspi_time', 'next_inspi_time']].values
-deformed_resp_2seg = physio.deform_traces_to_cycle_template(resp, times, cycle_times,
+deformed_resp_2seg = physio_piezo.deform_traces_to_cycle_template(resp, times, cycle_times,
                                                 points_per_cycle=40, segment_ratios=None,
                                                 output_mode='stacked')
 print(deformed_resp_2seg.shape, cycle_times.shape)
 
 fig, axs = plt.subplots(ncols=2, sharey=True)
-physio.plot_cyclic_deformation(deformed_resp_1seg, segment_ratios=None, two_cycles=False, ax=axs[0])
+physio_piezo.plot_cyclic_deformation(deformed_resp_1seg, segment_ratios=None, two_cycles=False, ax=axs[0])
 axs[0].set_title('Deformation 2 segments')
-physio.plot_cyclic_deformation(deformed_resp_2seg, segment_ratios=None, two_cycles=False, ax=axs[1])
+physio_piezo.plot_cyclic_deformation(deformed_resp_2seg, segment_ratios=None, two_cycles=False, ax=axs[1])
 axs[1].set_title('Deformation 1 segment')
 
 
@@ -188,13 +188,13 @@ axs[1].set_title('Deformation 1 segment')
 
 # This is 1 segment
 cycle_times = ecg_peaks['peak_time'].values
-deformed_ecg = physio.deform_traces_to_cycle_template(ecg, times, cycle_times,
+deformed_ecg = physio_piezo.deform_traces_to_cycle_template(ecg, times, cycle_times,
                                                 points_per_cycle=300, segment_ratios=None,
                                                 output_mode='stacked')
 print(deformed_ecg.shape, cycle_times.shape)
 
 fig, ax = plt.subplots()
-physio.plot_cyclic_deformation(deformed_ecg, two_cycles=True, ax=ax)
+physio_piezo.plot_cyclic_deformation(deformed_ecg, two_cycles=True, ax=ax)
 ax.set_title('Two ECG cycle averaged')
 
 ##############################################################################

@@ -1,7 +1,7 @@
 import numpy as np
 from pathlib import Path
 
-from physio import compute_ecg, compute_ecg_metrics, compute_instantaneous_rate, compute_hrv_psd
+from physio_piezo import compute_ecg, compute_ecg_metrics, compute_instantaneous_rate, compute_hrv_psd
 
 # read signals
 example_folder = Path(__file__).parents[1] / 'examples'

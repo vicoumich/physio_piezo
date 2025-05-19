@@ -24,7 +24,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
 
-import physio
+import physio_piezo
 
 ##############################################################################
 # 
@@ -40,7 +40,7 @@ srate = 1000.
 times = np.arange(raw_resp.size) / srate
 
 
-resp, resp_cycles = physio.compute_respiration(raw_resp, srate, parameter_preset='human_airflow')
+resp, resp_cycles = physio_piezo.compute_respiration(raw_resp, srate, parameter_preset='human_airflow')
 
 
 ##############################################################################
@@ -50,9 +50,9 @@ resp, resp_cycles = physio.compute_respiration(raw_resp, srate, parameter_preset
 # 
 # 
 
-ecg, ecg_peaks = physio.compute_ecg(raw_ecg, srate, parameter_preset='human_ecg')
+ecg, ecg_peaks = physio_piezo.compute_ecg(raw_ecg, srate, parameter_preset='human_ecg')
 rate_times = np.arange(0,  times[-1] + 1/50., 1/50.) # 50Hz
-instantaneous_cardiac_rate = physio.compute_instantaneous_rate(ecg_peaks, rate_times,
+instantaneous_cardiac_rate = physio_piezo.compute_instantaneous_rate(ecg_peaks, rate_times,
                                                                units='bpm', interpolation_kind='linear')
 
 ##############################################################################
@@ -72,7 +72,7 @@ cycle_times = resp_cycles[['inspi_time', 'expi_time','next_inspi_time']].values
 inspi_ratio = np.mean((cycle_times[:, 1] - cycle_times[:, 0]) / (cycle_times[:, 2] - cycle_times[:, 0]))
 segment_ratios = [inspi_ratio]
 
-cyclic_resp_2seg = physio.deform_traces_to_cycle_template(resp, times, cycle_times,
+cyclic_resp_2seg = physio_piezo.deform_traces_to_cycle_template(resp, times, cycle_times,
                                                 points_per_cycle=points_per_cycle, segment_ratios=segment_ratios)
 
 # two segments cyclic cardiac rate
@@ -81,7 +81,7 @@ inspi_ratio = np.mean((cycle_times[:, 1] - cycle_times[:, 0]) / (cycle_times[:, 
 
 segment_ratios = [inspi_ratio]
 
-cyclic_cardiac_rate_2seg = physio.deform_traces_to_cycle_template(instantaneous_cardiac_rate, rate_times, cycle_times,
+cyclic_cardiac_rate_2seg = physio_piezo.deform_traces_to_cycle_template(instantaneous_cardiac_rate, rate_times, cycle_times,
                                                 points_per_cycle=points_per_cycle, segment_ratios=segment_ratios)
 
 
