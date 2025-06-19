@@ -322,7 +322,7 @@ def detect_respiration_cycles_co2(co2_raw, srate, thresh_inspi_factor=0.08, thre
     return cycles
 
 
-def detect_cycles_by_extrema(resp, srate, min_cycle_duration=2.0):
+def detect_cycles_by_extrema(resp, srate, min_cycle_duration=2.0, lambda_mad=1.0, clean=False):
     """
     Detect respiration cycles based on signal extrema (usefull for piezo sensor)
     
@@ -341,33 +341,60 @@ def detect_cycles_by_extrema(resp, srate, min_cycle_duration=2.0):
         columns = [index_inspi, index_expi, next_index_inspi]
     """
     # Durée minimale entre deux inspi (en frames)
-    min_dist_samples = int(min_cycle_duration * srate)
+    
+    min_dist = int(min_cycle_duration * srate)
+    half_min = int((min_cycle_duration / 2) * srate)
 
-    # Trouver les pics (maxima) = fins inspiration
-    peaks, _ = find_peaks(resp, distance=min_dist_samples)
+    peaks, _   = find_peaks(resp, distance=min_dist)
+    troughs, _ = find_peaks(-resp, distance=min_dist)
 
-    # Trouver les creux (minima) = fins expiration → on inverse le signal
-    troughs, _ = find_peaks(-resp, distance=min_dist_samples)
-
-    # On garde uniquement les extrema dans l'ordre alterné [trough, peak, trough]
-    # [inspi, expi, next_inspi]
-    cycles = []
+    raw_cycles = []
     for i in range(len(troughs) - 1):
         t1 = troughs[i]
-        t2 = peaks[(peaks > t1) & (peaks < troughs[i + 1])]
-        if len(t2) == 0:
-            continue
-        t2 = t2[0]  # on prend le premier pic entre les deux creux
         t3 = troughs[i + 1]
-        cycles.append([t1, t2, t3])
+        cand = peaks[(peaks > t1) & (peaks < t3)]
+        if cand.size == 0:
+            continue
+        t2 = cand[0]
+        raw_cycles.append((t1, t2, t3))
+    raw_cycles = np.array(raw_cycles, dtype=int)
 
-    # Forcing de la continuité des valeurs next_inspi de i et inspi de i+1 dû à un bug 
-    cycles = np.array(cycles, dtype=int)
-    # pour chaque cycle sauf le dernier,
-    # on réécrit next_inspi à partir de l'inspi du cycle suivant
-    for i in range(len(cycles)-1):
-        cycles[i, 2] = cycles[i+1, 0]
-    return cycles
+    if raw_cycles.size == 0:
+        return raw_cycles
+
+    if not clean:
+        # Continuité pour next_inspi
+        for i in range(len(raw_cycles) - 1):
+            raw_cycles[i, 2] = raw_cycles[i + 1, 0]
+        return raw_cycles
+
+    # Nettoyage si clean=True
+    n = raw_cycles.shape[0]
+    durations = np.zeros((n, 2), dtype=int)
+    amplitudes = np.zeros(n, dtype=float)
+
+    for i, (t1, t2, t3) in enumerate(raw_cycles):
+        durations[i, 0] = t2 - t1
+        durations[i, 1] = t3 - t2
+        amp1 = abs(resp[t2] - resp[t1])
+        amp2 = abs(resp[t2] - resp[t3])
+        amplitudes[i] = amp1 + amp2
+
+    min_half = half_min
+    med_amp, mad_amp = compute_median_mad(amplitudes)
+    amp_limit = med_amp - lambda_mad * mad_amp
+
+    keep = np.ones(n, dtype=bool)
+    for i in range(n):
+        if ((durations[i, 0] < min_half) or (durations[i, 1] < min_half)) \
+           or (amplitudes[i] < amp_limit):
+            keep[i] = False
+
+    cycles_clean = raw_cycles[keep]
+    for i in range(len(cycles_clean) - 1):
+        cycles_clean[i, 2] = cycles_clean[i + 1, 0]
+
+    return cycles_clean
 
 
 def _ensure_interleave(ind0, ind1, remove_first=True):
